@@ -18,6 +18,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	// 从查询参数中获取 "hello" 的值
+	helloValue := r.URL.Query().Get("hello")
+	if helloValue == "" {
+		http.Error(w, "Missing 'hello' parameter", http.StatusBadRequest)
+		return
+	}
+
+	// 返回该值
+	fmt.Fprintf(w, "Hello, %s!", helloValue)
+}
+
 const (
 	host_ = "0.0.0.0"
 	port_ = 9000
@@ -43,8 +55,8 @@ func main() {
 	}
 	log.Println("credentials:", credentials)
 	tokenSource := token.NewQQBotTokenSource(&token.QQBotCredentials{
-		AppID:     "",
-		AppSecret: "",
+		AppID:     credentials.AppID,
+		AppSecret: credentials.AppSecret,
 	})
 	if err = token.StartRefreshAccessToken(ctx, tokenSource); err != nil {
 		log.Fatalln(err)
@@ -62,6 +74,35 @@ func main() {
 		// 频道@机器人事件
 		ChannelATMessageEventHandler(),
 	)
+	// 注册新的接口
+	http.HandleFunc("/hello", helloHandler) // 这里是添加的接口
+	http.HandleFunc("/102457514.json", func(w http.ResponseWriter, r *http.Request) {
+		// 文件路径
+		filePath := "102457514.json" // 替换为你要下载的文件的实际路径
+
+		// 打开文件
+		file, err := os.Open(filePath)
+		if err != nil {
+			http.Error(w, "File not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+
+		// 获取文件信息
+		fileInfo, err := file.Stat()
+		if err != nil {
+			http.Error(w, "Could not get file info", http.StatusInternalServerError)
+			return
+		}
+
+		// 设置响应头
+		w.Header().Set("Content-Disposition", "attachment; filename="+fileInfo.Name())
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+
+		// 写入文件内容到响应
+		http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
+	})
 	http.HandleFunc(path_, func(writer http.ResponseWriter, request *http.Request) {
 		webhook.HTTPHandler(writer, request, credentials)
 	})
