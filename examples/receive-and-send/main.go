@@ -18,6 +18,33 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func GetValidFile(w http.ResponseWriter, r *http.Request) {
+	// 文件路径
+	filePath := "102457514.json" // 替换为你要下载的文件的实际路径
+
+	// 打开文件
+	file, err := os.Open(filePath)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+	// 获取文件信息
+	fileInfo, err := file.Stat()
+	if err != nil {
+		http.Error(w, "Could not get file info", http.StatusInternalServerError)
+		return
+	}
+
+	// 设置响应头
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileInfo.Name())
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+
+	// 写入文件内容到响应
+	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
+}
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	// 从查询参数中获取 "hello" 的值
 	helloValue := r.URL.Query().Get("hello")
@@ -76,33 +103,7 @@ func main() {
 	)
 	// 注册新的接口
 	http.HandleFunc("/hello", helloHandler) // 这里是添加的接口
-	http.HandleFunc("/102457514.json", func(w http.ResponseWriter, r *http.Request) {
-		// 文件路径
-		filePath := "102457514.json" // 替换为你要下载的文件的实际路径
-
-		// 打开文件
-		file, err := os.Open(filePath)
-		if err != nil {
-			http.Error(w, "File not found", http.StatusNotFound)
-			return
-		}
-		defer file.Close()
-
-		// 获取文件信息
-		fileInfo, err := file.Stat()
-		if err != nil {
-			http.Error(w, "Could not get file info", http.StatusInternalServerError)
-			return
-		}
-
-		// 设置响应头
-		w.Header().Set("Content-Disposition", "attachment; filename="+fileInfo.Name())
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
-
-		// 写入文件内容到响应
-		http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
-	})
+	http.HandleFunc("/102457514.json", GetValidFile)
 	http.HandleFunc(path_, func(writer http.ResponseWriter, request *http.Request) {
 		webhook.HTTPHandler(writer, request, credentials)
 	})

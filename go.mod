@@ -2,7 +2,6 @@ module github.com/tencent-connect/botgo
 
 go 1.16
 
-
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.4
@@ -11,6 +10,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/sashabaranov/go-openai v1.32.3 // indirect
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.9.3
 	golang.org/x/net v0.19.0 // indirect
