@@ -90,7 +90,7 @@ func main() {
 		ChannelATMessageEventHandler(),
 	)
 	// 注册新的接口
-	http.HandleFunc("/hello", helloHandler) // 这里是添加的接口
+	//http.HandleFunc("/hello", helloHandler) // 这里是添加的接口
 	http.HandleFunc("/102457514.json", GetValidFile)
 	http.HandleFunc(path_, func(writer http.ResponseWriter, request *http.Request) {
 		webhook.HTTPHandler(writer, request, credentials)
