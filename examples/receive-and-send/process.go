@@ -95,7 +95,7 @@ func (p Processor) ProcessGroupMessage(input string, data *dto.WSGroupATMessageD
 		MsgSeq:   int(msg.MsgSeq),
 	}
 	tokenTmp, _ := tokenSource.Token()
-	if messageId, err := SendMessageV2(data.GroupID, msgV2, tokenTmp.AccessToken); err != nil {
+	if messageId, err := SendGroupMessageV2(data.GroupID, msgV2, tokenTmp.AccessToken); err != nil {
 		_ = p.sendGroupReply(context.Background(), data.GroupID, genErrMessage(dto.Message(*data), err))
 	} else {
 		fmt.Println(messageId)
@@ -111,8 +111,22 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 		userID = data.Author.ID
 	}
 	msg := generateDemoMessage(input, dto.Message(*data))
-	if err := p.sendC2CReply(context.Background(), userID, msg); err != nil {
+	msgV2 := MessageRequest{
+		Content:  msg.Content,
+		MsgType:  int(msg.MsgType),
+		Markdown: msg.Markdown,
+		Keyboard: msg.Keyboard,
+		Media:    msg.Media,
+		Ark:      msg.Ark,
+		EventID:  msg.EventID,
+		MsgID:    msg.MsgID,
+		MsgSeq:   int(msg.MsgSeq),
+	}
+	tokenTmp, _ := tokenSource.Token()
+	if messageId, err := SendUserMessageV2(userID, msgV2, tokenTmp.AccessToken); err != nil {
 		_ = p.sendC2CReply(context.Background(), userID, genErrMessage(dto.Message(*data), err))
+	} else {
+		fmt.Println(messageId)
 	}
 	return nil
 }
@@ -301,8 +315,50 @@ type MessageResponse struct {
 }
 
 // SendMessage 发送消息到指定群组
-func SendMessageV2(groupOpenID string, msg MessageRequest, token string) (string, error) {
+func SendGroupMessageV2(groupOpenID string, msg MessageRequest, token string) (string, error) {
 	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/messages", groupOpenID)
+	method := "POST"
+
+	payload := strings.NewReader(`{
+  "content": "` + msg.Content + `",
+  "msg_type": ` + strconv.Itoa(msg.MsgType) + `,
+  "media": {
+    "file_info": "` + string(msg.Media.FileInfo) + `"
+  }
+}`)
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "QQBot "+token)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	fmt.Println(string(body))
+	// 可以读取响应体并解析 JSON，返回消息 ID 等信息
+	var response MessageResponse
+	json.Unmarshal(body, &response)
+	return response.id, nil
+}
+
+// SendMessage 发送消息到指定群组
+func SendUserMessageV2(openID string, msg MessageRequest, token string) (string, error) {
+	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/users/%s/messages", openID)
 	method := "POST"
 
 	payload := strings.NewReader(`{
