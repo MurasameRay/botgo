@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -25,7 +26,34 @@ func imageHandler(input string) string {
 		"https://gd-hbimg.huaban.com/c2204b29fd5b1e37b8ea2198c20ab9a8ae017262bf430-QLd98Z",
 		"https://gd-hbimg.huaban.com/cc45d37558f6ee802a358d6e76df3539ae7351523c8eb-u9jU9X_fw1200",
 	}
-	return imageList[index]
+	bytes, err := DownloadImage(imageList[index])
+	if err != nil {
+		return err.Error()
+	}
+	return string(bytes)
+}
+
+// DownloadImage 下载指定 URL 的图片并返回二进制数据
+func DownloadImage(url string) ([]byte, error) {
+	// 发送 GET 请求
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download image: %w", err)
+	}
+	defer resp.Body.Close() // 确保在函数结束时关闭响应体
+
+	// 检查响应状态码
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download image: status code %d", resp.StatusCode)
+	}
+
+	// 读取响应体
+	imageData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read image data: %w", err)
+	}
+
+	return imageData, nil
 }
 
 // 处理命令的函数

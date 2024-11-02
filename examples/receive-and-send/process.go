@@ -112,10 +112,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 	//	msg += ",收到文件类型:" + _v.ContentType
 	//}
 	msgType := dto.TextMsg
-	if strings.HasPrefix(msg, "http") {
-		msgType = dto.RichMediaMsg
-	}
-	return &dto.MessageToCreate{
+	response := &dto.MessageToCreate{
 		Timestamp: time.Now().UnixMilli(),
 		Content:   msg,
 		MsgType:   msgType,
@@ -126,6 +123,12 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		},
 		MsgID: data.ID,
 	}
+	if strings.HasPrefix(input, "http") {
+		response.MsgType = dto.RichMediaMsg
+		response.Media.FileInfo = []byte(msg)
+		response.Content = "图片效果"
+	}
+	return response
 }
 
 // ProcessFriend 处理 c2c 好友事件
