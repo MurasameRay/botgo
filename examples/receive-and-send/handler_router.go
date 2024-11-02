@@ -20,15 +20,7 @@ var CommandRegistry = map[string]func(string) string{
 
 func imageHandler(input string) string {
 
-	imageList := []string{
-		"https://pic2.zhimg.com/v2-738113183a46d8cc5494e269e1356c1d_r.jpg",
-		"https://pic2.zhimg.com/v2-53efed13d3b03ea0a831e94035b32f9b_1440w.jpg",
-		"https://i0.hdslb.com/bfs/new_dyn/621d179e761b9ddc062f2d5e57516b37166383626.jpg",
-		"https://konachan.com/sample/7e64428813fb7119530f388777f7d9ba/Konachan.com%20-%20382933%20sample.jpg",
-		//"https://gd-hbimg.huaban.com/a33494c4935115a184a2f74d265e5b4cabd47f20584ea-597UsD_fw1200webp",
-		//"https://gd-hbimg.huaban.com/c2204b29fd5b1e37b8ea2198c20ab9a8ae017262bf430-QLd98Z",
-		//"https://gd-hbimg.huaban.com/cc45d37558f6ee802a358d6e76df3539ae7351523c8eb-u9jU9X_fw1200",
-	}
+	imageList, _ := GetUrlFromFile()
 	index := rand.Int() % len(imageList)
 	//bytes, err := DownloadImage(imageList[index])
 	//if err != nil {
