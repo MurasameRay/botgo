@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -96,8 +95,10 @@ func (p Processor) ProcessGroupMessage(input string, data *dto.WSGroupATMessageD
 		MsgSeq:   int(msg.MsgSeq),
 	}
 	tokenTmp, _ := tokenSource.Token()
-	if err := SendMessageV2(data.GroupID, msgV2, tokenTmp.AccessToken); err != nil {
+	if messageId, err := SendMessageV2(data.GroupID, msgV2, tokenTmp.AccessToken); err != nil {
 		_ = p.sendGroupReply(context.Background(), data.GroupID, genErrMessage(dto.Message(*data), err))
+	} else {
+		fmt.Println(messageId)
 	}
 
 	return nil
@@ -283,15 +284,15 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 
 // MessageRequest 定义发送消息的请求体结构
 type MessageRequest struct {
-	Content  string      `json:"content"`
-	MsgType  int         `json:"msg_type"`
-	Markdown interface{} `json:"markdown,omitempty"` // 可选字段
-	Keyboard interface{} `json:"keyboard,omitempty"` // 可选字段
-	Media    interface{} `json:"media,omitempty"`    // 可选字段
-	Ark      interface{} `json:"ark,omitempty"`      // 可选字段
-	EventID  string      `json:"event_id,omitempty"` // 可选字段
-	MsgID    string      `json:"msg_id,omitempty"`   // 可选字段
-	MsgSeq   int         `json:"msg_seq,omitempty"`  // 可选字段
+	Content  string         `json:"content"`
+	MsgType  int            `json:"msg_type"`
+	Markdown interface{}    `json:"markdown,omitempty"` // 可选字段
+	Keyboard interface{}    `json:"keyboard,omitempty"` // 可选字段
+	Media    *dto.MediaInfo `json:"media,omitempty"`    // 可选字段
+	Ark      interface{}    `json:"ark,omitempty"`      // 可选字段
+	EventID  string         `json:"event_id,omitempty"` // 可选字段
+	MsgID    string         `json:"msg_id,omitempty"`   // 可选字段
+	MsgSeq   int            `json:"msg_seq,omitempty"`  // 可选字段
 }
 
 type MessageResponse struct {
@@ -300,39 +301,43 @@ type MessageResponse struct {
 }
 
 // SendMessage 发送消息到指定群组
-func SendMessageV2(groupOpenID string, msg MessageRequest, token string) error {
+func SendMessageV2(groupOpenID string, msg MessageRequest, token string) (string, error) {
 	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/messages", groupOpenID)
+	method := "POST"
 
-	// 将请求体编码为 JSON
-	payload, err := json.Marshal(msg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
+	payload := strings.NewReader(`{
+  "content": "` + msg.Content + `",
+  "msg_type": ` + strconv.Itoa(msg.MsgType) + `,
+  "media": {
+    "file_info": "` + string(msg.Media.FileInfo) + `"
+  }
+}`)
 
-	// 创建 HTTP 请求
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// 设置请求头
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "QQBot "+token) // 替换为你的 Token
-
-	// 发送请求
 	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "QQBot "+token)
+
 	res, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		fmt.Println(err)
+		return "", err
 	}
 	defer res.Body.Close()
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return "", err
 	}
+	fmt.Println(string(body))
 	// 可以读取响应体并解析 JSON，返回消息 ID 等信息
 	var response MessageResponse
 	json.Unmarshal(body, &response)
-	return nil
+	return response.id, nil
 }
