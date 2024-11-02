@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/tencent-connect/botgo/token"
+	"gopkg.in/yaml.v3"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -127,6 +130,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 	}
 	if strings.HasPrefix(msg, "http") {
 		file, err := UploadFile(data.GroupID, 1, msg, false)
+
 		if err != nil {
 			response.Content = err.Error()
 			return response
@@ -203,8 +207,20 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 	// 构建请求 URL
 	reqURL := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/files", groupOpenID)
 
-	// 发送 POST 请求
-	resp, err := http.Post(reqURL, "application/json", bytes.NewBuffer(body))
+	// 创建新的 POST 请求
+	req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	authToken, _ := GetAccessToken(context.Background())
+	// 设置请求头
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", authToken) // 添加 Authorization 头
+
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
@@ -222,4 +238,31 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 	}
 
 	return &response, nil
+}
+
+// GetAccessToken 从配置文件中获取 Token
+func GetAccessToken(ctx context.Context) (string, error) {
+	// 读取配置文件
+	content, err := os.ReadFile("config.yaml")
+	if err != nil {
+		return "", fmt.Errorf("load config file failed, err: %w", err)
+	}
+
+	// 解析配置文件
+	credentials := &token.QQBotCredentials{}
+	if err = yaml.Unmarshal(content, credentials); err != nil {
+		return "", fmt.Errorf("parse config failed, err: %w", err)
+	}
+
+	// 创建 Token 源
+	tokenSource := token.NewQQBotTokenSource(credentials)
+
+	// 刷新 Access Token
+	if err = token.StartRefreshAccessToken(ctx, tokenSource); err != nil {
+		return "", fmt.Errorf("failed to refresh access token: %w", err)
+	}
+
+	// 获取 Token
+	token, _ := tokenSource.Token() // 假设 Token() 方法返回当前 Token
+	return token.AccessToken, nil
 }
