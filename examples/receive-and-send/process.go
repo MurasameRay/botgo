@@ -165,7 +165,6 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		response.Content = " "
 		response.MsgType = dto.RichMediaMsg
 		response.Media.FileInfo = []byte(file.FileInfo)
-		}
 	}
 	return response
 }
