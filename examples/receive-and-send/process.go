@@ -111,9 +111,14 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 	//for _, _v := range data.Attachments {
 	//	msg += ",收到文件类型:" + _v.ContentType
 	//}
+	msgType := dto.TextMsg
+	if strings.HasPrefix(msg, "http") {
+		msgType = dto.RichMediaMsg
+	}
 	return &dto.MessageToCreate{
 		Timestamp: time.Now().UnixMilli(),
 		Content:   msg,
+		MsgType:   msgType,
 		MessageReference: &dto.MessageReference{
 			// 引用这条消息
 			MessageID:             data.ID,
