@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -83,7 +84,19 @@ func genErrMessage(data dto.Message, err error) *dto.MessageToCreate {
 // ProcessGroupMessage 回复群消息
 func (p Processor) ProcessGroupMessage(input string, data *dto.WSGroupATMessageData) error {
 	msg := generateDemoMessage(input, dto.Message(*data))
-	if err := p.sendGroupReply(context.Background(), data.GroupID, msg); err != nil {
+	msgV2 := MessageRequest{
+		Content:  msg.Content,
+		MsgType:  int(msg.MsgType),
+		Markdown: msg.Markdown,
+		Keyboard: msg.Keyboard,
+		Media:    msg.Media,
+		Ark:      msg.Ark,
+		EventID:  msg.EventID,
+		MsgID:    msg.MsgID,
+		MsgSeq:   int(msg.MsgSeq),
+	}
+	tokenTmp, _ := tokenSource.Token()
+	if err := SendMessageV2(data.GroupID, msgV2, tokenTmp.AccessToken); err != nil {
 		_ = p.sendGroupReply(context.Background(), data.GroupID, genErrMessage(dto.Message(*data), err))
 	}
 
@@ -267,3 +280,55 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 //	token, _ := tokenSource.Token() // 假设 Token() 方法返回当前 Token
 //	return token.AccessToken, nil
 //}
+
+// MessageRequest 定义发送消息的请求体结构
+type MessageRequest struct {
+	Content  string      `json:"content"`
+	MsgType  int         `json:"msg_type"`
+	Markdown interface{} `json:"markdown,omitempty"` // 可选字段
+	Keyboard interface{} `json:"keyboard,omitempty"` // 可选字段
+	Media    interface{} `json:"media,omitempty"`    // 可选字段
+	Ark      interface{} `json:"ark,omitempty"`      // 可选字段
+	EventID  string      `json:"event_id,omitempty"` // 可选字段
+	MsgID    string      `json:"msg_id,omitempty"`   // 可选字段
+	MsgSeq   int         `json:"msg_seq,omitempty"`  // 可选字段
+}
+
+// SendMessage 发送消息到指定群组
+func SendMessageV2(groupOpenID string, msg MessageRequest, token string) error {
+	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/messages", groupOpenID)
+
+	// 将请求体编码为 JSON
+	payload, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	// 创建 HTTP 请求
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// 设置请求头
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "QQBot "+token) // 替换为你的 Token
+
+	// 发送请求
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer res.Body.Close()
+
+	// 检查响应状态
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("received non-200 response: %s", res.Status)
+	}
+
+	// 处理响应（可选）
+	// 可以读取响应体并解析 JSON，返回消息 ID 等信息
+
+	return nil
+}
