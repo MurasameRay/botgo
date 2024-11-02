@@ -5,11 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tencent-connect/botgo/token"
-	"gopkg.in/yaml.v3"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -212,12 +209,12 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+	authToken, _ := tokenSource.Token()
 
-	authToken, _ := GetAccessToken(context.Background())
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("appid", "102457514")
-	req.Header.Set("Authorization", "QQBot "+authToken) // 添加 Authorization 头
+	req.Header.Set("Authorization", "QQBot "+authToken.AccessToken) // 添加 Authorization 头
 
 	// 发送请求
 	client := &http.Client{}
@@ -241,29 +238,30 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 	return &response, nil
 }
 
-// GetAccessToken 从配置文件中获取 Token
-func GetAccessToken(ctx context.Context) (string, error) {
-	// 读取配置文件
-	content, err := os.ReadFile("config.yaml")
-	if err != nil {
-		return "", fmt.Errorf("load config file failed, err: %w", err)
-	}
-
-	// 解析配置文件
-	credentials := &token.QQBotCredentials{}
-	if err = yaml.Unmarshal(content, credentials); err != nil {
-		return "", fmt.Errorf("parse config failed, err: %w", err)
-	}
-
-	// 创建 Token 源
-	tokenSource := token.NewQQBotTokenSource(credentials)
-
-	// 刷新 Access Token
-	if err = token.StartRefreshAccessToken(ctx, tokenSource); err != nil {
-		return "", fmt.Errorf("failed to refresh access token: %w", err)
-	}
-
-	// 获取 Token
-	token, _ := tokenSource.Token() // 假设 Token() 方法返回当前 Token
-	return token.AccessToken, nil
-}
+//
+//// GetAccessToken 从配置文件中获取 Token
+//func GetAccessToken(ctx context.Context) (string, error) {
+//	// 读取配置文件
+//	content, err := os.ReadFile("config.yaml")
+//	if err != nil {
+//		return "", fmt.Errorf("load config file failed, err: %w", err)
+//	}
+//
+//	// 解析配置文件
+//	credentials := &token.QQBotCredentials{}
+//	if err = yaml.Unmarshal(content, credentials); err != nil {
+//		return "", fmt.Errorf("parse config failed, err: %w", err)
+//	}
+//
+//	// 创建 Token 源
+//	tokenSource := token.NewQQBotTokenSource(credentials)
+//
+//	// 刷新 Access Token
+//	if err = token.StartRefreshAccessToken(ctx, tokenSource); err != nil {
+//		return "", fmt.Errorf("failed to refresh access token: %w", err)
+//	}
+//
+//	// 获取 Token
+//	token, _ := tokenSource.Token() // 假设 Token() 方法返回当前 Token
+//	return token.AccessToken, nil
+//}

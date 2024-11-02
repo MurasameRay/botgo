@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"os"
@@ -53,6 +54,7 @@ const (
 
 // 消息处理器，持有 openapi 对象
 var processor Processor
+var tokenSource oauth2.TokenSource
 
 func main() {
 	ctx := context.Background()
@@ -69,7 +71,7 @@ func main() {
 		log.Fatalln("parse config failed, err:", err)
 	}
 	log.Println("credentials:", credentials)
-	tokenSource := token.NewQQBotTokenSource(&token.QQBotCredentials{
+	tokenSource = token.NewQQBotTokenSource(&token.QQBotCredentials{
 		AppID:     credentials.AppID,
 		AppSecret: credentials.AppSecret,
 	})
