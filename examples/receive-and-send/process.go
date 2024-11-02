@@ -216,7 +216,8 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 	authToken, _ := GetAccessToken(context.Background())
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", authToken) // 添加 Authorization 头
+	req.Header.Set("appid", "102457514")
+	req.Header.Set("Authorization", "QQBot "+authToken) // 添加 Authorization 头
 
 	// 发送请求
 	client := &http.Client{}
