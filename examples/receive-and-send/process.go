@@ -154,6 +154,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		},
 		MsgID: data.ID,
 	}
+	response.Media = &dto.MediaInfo{}
 	if strings.HasPrefix(msg, "http") {
 		file, err := UploadFile(data.GroupID, 1, msg, false)
 
@@ -163,8 +164,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		}
 		response.Content = " "
 		response.MsgType = dto.RichMediaMsg
-		response.Media = &dto.MediaInfo{
-			FileInfo: []byte(file.FileInfo),
+		response.Media.FileInfo = []byte(file.FileInfo)
 		}
 	}
 	return response
