@@ -146,11 +146,11 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 			response.Content = err.Error()
 			return response
 		}
+		response.Content = " "
 		response.MsgType = dto.RichMediaMsg
 		response.Media = &dto.MediaInfo{
 			FileInfo: []byte(file.FileInfo),
 		}
-		response.Content = file.FileInfo
 	}
 	return response
 }
@@ -294,6 +294,11 @@ type MessageRequest struct {
 	MsgSeq   int         `json:"msg_seq,omitempty"`  // 可选字段
 }
 
+type MessageResponse struct {
+	id        string //消息唯一 ID
+	timestamp int    //发送时间
+}
+
 // SendMessage 发送消息到指定群组
 func SendMessageV2(groupOpenID string, msg MessageRequest, token string) error {
 	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/messages", groupOpenID)
@@ -305,7 +310,7 @@ func SendMessageV2(groupOpenID string, msg MessageRequest, token string) error {
 	}
 
 	// 创建 HTTP 请求
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -321,14 +326,13 @@ func SendMessageV2(groupOpenID string, msg MessageRequest, token string) error {
 		return fmt.Errorf("request failed: %w", err)
 	}
 	defer res.Body.Close()
-
-	// 检查响应状态
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("received non-200 response: %s", res.Status)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return err
 	}
-
-	// 处理响应（可选）
 	// 可以读取响应体并解析 JSON，返回消息 ID 等信息
-
+	var response MessageResponse
+	json.Unmarshal(body, &response)
 	return nil
 }
