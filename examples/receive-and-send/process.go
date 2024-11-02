@@ -210,12 +210,12 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	authToken, _ := tokenSource.Token()
-	log.Println("authToken_debug:" + authToken.AccessToken)
+	//log.Println("authToken_debug:" + authToken.AccessToken)
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("appid", "102457514")
 	req.Header.Set("Authorization", "QQBot "+authToken.AccessToken) // 添加 Authorization 头
-	log.Println("req Authorization", req)
+	//log.Println("req Authorization", req)
 	// 发送请求
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -223,7 +223,7 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close() // 确保响应体在函数结束时关闭
-
+	log.Println("response:", resp)
 	// 检查响应状态
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
