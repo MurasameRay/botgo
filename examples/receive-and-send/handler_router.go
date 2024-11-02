@@ -26,11 +26,12 @@ func imageHandler(input string) string {
 		"https://gd-hbimg.huaban.com/c2204b29fd5b1e37b8ea2198c20ab9a8ae017262bf430-QLd98Z",
 		"https://gd-hbimg.huaban.com/cc45d37558f6ee802a358d6e76df3539ae7351523c8eb-u9jU9X_fw1200",
 	}
-	bytes, err := DownloadImage(imageList[index])
-	if err != nil {
-		return err.Error()
-	}
-	return string(bytes)
+	//bytes, err := DownloadImage(imageList[index])
+	//if err != nil {
+	//	return err.Error()
+	//}
+	//return string(bytes)
+	return imageList[index]
 }
 
 // DownloadImage 下载指定 URL 的图片并返回二进制数据
