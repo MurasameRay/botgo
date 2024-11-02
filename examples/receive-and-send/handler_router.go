@@ -14,8 +14,8 @@ import (
 var CommandRegistry = map[string]func(string) string{
 	"/hello": helloHandler,
 	"/time":  timeHandler,
-	"/test":  gptHandler,
 	"/image": imageHandler,
+	"":       gptHandler,
 }
 
 func imageHandler(input string) string {
