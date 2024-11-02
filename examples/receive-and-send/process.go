@@ -126,7 +126,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		MsgID: data.ID,
 	}
 	if strings.HasPrefix(msg, "http") {
-		file, err := UploadFile(data.GroupID, int(dto.RichMediaMsg), msg, false)
+		file, err := UploadFile(data.GroupID, 1, msg, false)
 		if err != nil {
 			response.Content = err.Error()
 			return response
