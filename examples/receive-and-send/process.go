@@ -1,12 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -189,52 +190,51 @@ type FileUploadResponse struct {
 // UploadFile 上传文件到群聊的函数
 func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (*FileUploadResponse, error) {
 	// 请求参数
-	requestBody := FileUploadRequest{
-		FileType:   fileType,
-		URL:        url,
-		SrvSendMsg: srvSendMsg,
-	}
-
-	// 将请求参数编码为 JSON
-	body, err := json.Marshal(requestBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
-	}
-
 	// 构建请求 URL
 	reqURL := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/files", groupOpenID)
+	method := "POST"
 
-	// 创建新的 POST 请求
-	req, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewBuffer(body))
+	payload := strings.NewReader(`{
+  "file_type": ` + strconv.Itoa(fileType) + `,
+  "url": "` + url + `",
+  "srv_send_msg": ` + strconv.FormatBool(srvSendMsg) + `
+}`)
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, reqURL, payload)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		fmt.Println(err)
+		return nil, err
 	}
 	authToken, _ := tokenSource.Token()
-	//log.Println("authToken_debug:" + authToken.AccessToken)
-	// 设置请求头
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("appid", "102457514")
-	req.Header.Set("Authorization", "QQBot "+authToken.AccessToken) // 添加 Authorization 头
-	//log.Println("req Authorization", req)
-	// 发送请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close() // 确保响应体在函数结束时关闭
-	log.Println("response:", resp)
-	// 检查响应状态
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
-	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("appid", "102457514")
+	req.Header.Add("Authorization", "QQBot "+authToken.AccessToken)
 
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Println(string(body))
 	// 解析响应
 	var response FileUploadResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
 	}
-
+	// 检查响应状态
+	if response.FileInfo == "" {
+		return nil, fmt.Errorf("request failed with body: %s", body)
+	}
 	return &response, nil
 }
 
