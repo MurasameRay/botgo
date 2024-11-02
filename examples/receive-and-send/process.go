@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -123,9 +125,14 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		},
 		MsgID: data.ID,
 	}
-	if strings.HasPrefix(input, "http") {
+	if strings.HasPrefix(msg, "http") {
+		file, err := UploadFile(data.GroupID, int(dto.RichMediaMsg), msg, false)
+		if err != nil {
+			response.Content = err.Error()
+			return response
+		}
 		response.MsgType = dto.RichMediaMsg
-		response.Media.FileInfo = []byte(msg)
+		response.Media.FileInfo = []byte(file.FileInfo)
 		response.Content = "图片效果"
 	}
 	return response
@@ -160,4 +167,59 @@ func (p Processor) ProcessFriend(wsEventType string, data *dto.WSC2CFriendData) 
 		return err
 	}
 	return nil
+}
+
+// FileUploadRequest 定义请求参数结构
+type FileUploadRequest struct {
+	FileType   int    `json:"file_type"`
+	URL        string `json:"url"`
+	SrvSendMsg bool   `json:"srv_send_msg"`
+	FileData   string `json:"file_data,omitempty"` // 可选字段
+}
+
+// FileUploadResponse 定义响应参数结构
+type FileUploadResponse struct {
+	FileUUID string `json:"file_uuid"`
+	FileInfo string `json:"file_info"`
+	TTL      int    `json:"ttl"`
+	ID       string `json:"id,omitempty"` // 可选字段
+}
+
+// UploadFile 上传文件到群聊的函数
+func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (*FileUploadResponse, error) {
+	// 请求参数
+	requestBody := FileUploadRequest{
+		FileType:   fileType,
+		URL:        url,
+		SrvSendMsg: srvSendMsg,
+	}
+
+	// 将请求参数编码为 JSON
+	body, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	// 构建请求 URL
+	reqURL := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/files", groupOpenID)
+
+	// 发送 POST 请求
+	resp, err := http.Post(reqURL, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close() // 确保响应体在函数结束时关闭
+
+	// 检查响应状态
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed with status: %s", resp.Status)
+	}
+
+	// 解析响应
+	var response FileUploadResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &response, nil
 }
