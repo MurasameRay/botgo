@@ -45,18 +45,6 @@ func GetValidFile(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), file)
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	// 从查询参数中获取 "hello" 的值
-	helloValue := r.URL.Query().Get("hello")
-	if helloValue == "" {
-		http.Error(w, "Missing 'hello' parameter", http.StatusBadRequest)
-		return
-	}
-
-	// 返回该值
-	fmt.Fprintf(w, "Hello, %s!", helloValue)
-}
-
 const (
 	host_ = "0.0.0.0"
 	port_ = 9000
@@ -136,10 +124,12 @@ func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 	}
 }
 
-// C2CMessageEventHandler 实现处理 at 消息的回调
+// C2CMessageEventHandler 实现处理 c2c 消息的回调
 func C2CMessageEventHandler() event.C2CMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSC2CMessageData) error {
-		return processor.ProcessC2CMessage(string(event.RawMessage), data)
+		input := strings.ToLower(message.ETLInput(data.Content))
+		return processor.ProcessC2CMessage(input, data)
+		//string(event.RawMessage)
 	}
 }
 

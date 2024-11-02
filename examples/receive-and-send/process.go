@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"strings"
 	"time"
 
@@ -104,28 +102,8 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 
 func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 	log.Printf("收到指令: %+v", input)
-	url := "http://127.0.0.1:23333/ask_chatgpt?word=" + input
-	method := "GET"
+	msg := ProcessCommand(input)
 
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	defer res.Body.Close()
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
 	//msg := ""
 	//if len(input) > 0 {
 	//	msg += "收到:" + input
@@ -135,7 +113,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 	//}
 	return &dto.MessageToCreate{
 		Timestamp: time.Now().UnixMilli(),
-		Content:   string(body),
+		Content:   msg,
 		MessageReference: &dto.MessageReference{
 			// 引用这条消息
 			MessageID:             data.ID,
