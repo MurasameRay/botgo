@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +14,18 @@ var CommandRegistry = map[string]func(string) string{
 	"/hello": helloHandler,
 	"/time":  timeHandler,
 	"/test":  gptHandler,
+	"/image": imageHandler,
+}
+
+func imageHandler(input string) string {
+	index := rand.Int() % 1
+	imageList := []string{
+		"https://pic2.zhimg.com/v2-738113183a46d8cc5494e269e1356c1d_r.jpg",
+		"https://gd-hbimg.huaban.com/a33494c4935115a184a2f74d265e5b4cabd47f20584ea-597UsD_fw1200webp",
+		"https://gd-hbimg.huaban.com/c2204b29fd5b1e37b8ea2198c20ab9a8ae017262bf430-QLd98Z",
+		"https://gd-hbimg.huaban.com/cc45d37558f6ee802a358d6e76df3539ae7351523c8eb-u9jU9X_fw1200",
+	}
+	return imageList[index]
 }
 
 // 处理命令的函数
