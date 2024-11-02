@@ -137,7 +137,7 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 		response.Media = &dto.MediaInfo{
 			FileInfo: []byte(file.FileInfo),
 		}
-		response.Content = "图片效果"
+		response.Content = file.FileInfo
 	}
 	return response
 }
