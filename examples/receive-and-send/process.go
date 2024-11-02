@@ -134,7 +134,9 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 			return response
 		}
 		response.MsgType = dto.RichMediaMsg
-		response.Media.FileInfo = []byte(file.FileInfo)
+		response.Media = &dto.MediaInfo{
+			FileInfo: []byte(file.FileInfo),
+		}
 		response.Content = "图片效果"
 	}
 	return response
@@ -224,7 +226,7 @@ func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (
 		fmt.Println(err)
 		return nil, err
 	}
-	fmt.Println(string(body))
+	//fmt.Println(string(body))
 	// 解析响应
 	var response FileUploadResponse
 	err = json.Unmarshal(body, &response)
