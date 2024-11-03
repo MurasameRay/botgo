@@ -126,7 +126,7 @@ func InteractionHandler() event.InteractionEventHandler {
 // GroupATMessageEventHandler 实现处理 at 消息的回调
 func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSGroupATMessageData) error {
-		if processor.limit.LimitRequest(data.Content) {
+		if !processor.limit.LimitRequest(data.Content) {
 			return nil
 		}
 		input := strings.ToLower(message.ETLInput(data.Content))
@@ -137,7 +137,7 @@ func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 // C2CMessageEventHandler 实现处理 c2c 消息的回调
 func C2CMessageEventHandler() event.C2CMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSC2CMessageData) error {
-		if processor.limit.LimitRequest(data.Content) {
+		if !processor.limit.LimitRequest(data.Content) {
 			return nil
 		}
 		input := strings.ToLower(message.ETLInput(data.Content))
