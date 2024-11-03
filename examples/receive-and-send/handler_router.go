@@ -15,6 +15,7 @@ var CommandRegistry = map[string]func(string) string{
 	"/hello": helloHandler,
 	"/time":  timeHandler,
 	"/image": imageHandler,
+	"/gpt":   gptHandler,
 	"":       gptHandler,
 }
 
