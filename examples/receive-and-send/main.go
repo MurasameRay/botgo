@@ -48,7 +48,7 @@ func GetValidFile(w http.ResponseWriter, r *http.Request) {
 
 const (
 	host_ = "0.0.0.0"
-	port_ = 9000
+	port_ = 8888
 	path_ = "/qqbot"
 )
 
