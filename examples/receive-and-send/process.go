@@ -22,7 +22,7 @@ type Processor struct {
 
 // ProcessChannelMessage is a function to process message
 func (p Processor) ProcessChannelMessage(input string, data *dto.WSATMessageData) error {
-	msg := generateDemoMessage(input, dto.Message(*data))
+	msg := generateGroupMessage(input, dto.Message(*data))
 	if err := p.sendChannelReply(context.Background(), data.ChannelID, msg); err != nil {
 		_ = p.sendChannelReply(context.Background(), data.GroupID, genErrMessage(dto.Message(*data), err))
 	}
@@ -82,7 +82,7 @@ func genErrMessage(data dto.Message, err error) *dto.MessageToCreate {
 
 // ProcessGroupMessage 回复群消息
 func (p Processor) ProcessGroupMessage(input string, data *dto.WSGroupATMessageData) error {
-	msg := generateDemoMessage(input, dto.Message(*data))
+	msg := generateGroupMessage(input, dto.Message(*data))
 	//msgV2 := MessageRequest{
 	//	Content:  msg.Content,
 	//	MsgType:  int(msg.MsgType),
@@ -111,7 +111,7 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 	if data.Author != nil && data.Author.ID != "" {
 		userID = data.Author.ID
 	}
-	msg := generateDemoMessage(input, dto.Message(*data))
+	msg := generateUserMessage(input, dto.Message(*data))
 	//msgV2 := MessageRequest{
 	//	Content:  msg.Content,
 	//	MsgType:  int(msg.MsgType),
@@ -124,6 +124,16 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 	//	MsgSeq:   int(msg.MsgSeq),
 	//}
 	//tokenTmp, _ := tokenSource.Token() //messageId,
+	//msgV3 := dto.RichMediaMessage{
+	//	Content:  msg.Content,
+	//	FileType: 1,
+	//	Media:    msg.Media,
+	//	Ark:      msg.Ark,
+	//	EventID:  msg.EventID,
+	//	MsgID:    msg.MsgID,
+	//	MsgSeq:   int(msg.MsgSeq),
+	//}
+
 	if err := p.sendC2CReply(context.Background(), userID, msg); err != nil {
 		_ = p.sendC2CReply(context.Background(), userID, genErrMessage(dto.Message(*data), err))
 	} else {
@@ -132,7 +142,7 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 	return nil
 }
 
-func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
+func generateGroupMessage(input string, data dto.Message) *dto.MessageToCreate {
 	log.Printf("收到指令: %+v", input)
 	msg := ProcessCommand(input)
 
@@ -157,7 +167,45 @@ func generateDemoMessage(input string, data dto.Message) *dto.MessageToCreate {
 	}
 	response.Media = &dto.MediaInfo{}
 	if strings.HasPrefix(msg, "http") {
-		file, err := UploadFile(data.GroupID, 1, msg, false)
+		file, err := UploadGroupFile(data.GroupID, 1, msg, false)
+
+		if err != nil {
+			response.Content = err.Error()
+			return response
+		}
+		response.Content = " "
+		response.MsgType = dto.RichMediaMsg
+		response.Media.FileInfo = []byte(file.FileInfo)
+	}
+	return response
+}
+
+func generateUserMessage(input string, data dto.Message) *dto.MessageToCreate {
+	log.Printf("收到指令: %+v", input)
+	msg := ProcessCommand(input)
+
+	//msg := ""
+	//if len(input) > 0 {
+	//	msg += "收到:" + input
+	//}
+	//for _, _v := range data.Attachments {
+	//	msg += ",收到文件类型:" + _v.ContentType
+	//}
+	msgType := dto.TextMsg
+	response := &dto.MessageToCreate{
+		Timestamp: time.Now().UnixMilli(),
+		Content:   msg,
+		MsgType:   msgType,
+		MessageReference: &dto.MessageReference{
+			// 引用这条消息
+			MessageID:             data.ID,
+			IgnoreGetMessageError: true,
+		},
+		MsgID: data.ID,
+	}
+	response.Media = &dto.MediaInfo{}
+	if strings.HasPrefix(msg, "http") {
+		file, err := UploadUserFile(data.GroupID, 1, msg, false)
 
 		if err != nil {
 			response.Content = err.Error()
@@ -217,8 +265,59 @@ type FileUploadResponse struct {
 	ID       string `json:"id,omitempty"` // 可选字段
 }
 
-// UploadFile 上传文件到群聊的函数
-func UploadFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (*FileUploadResponse, error) {
+// UploadGroupFile 上传文件到群聊的函数
+func UploadUserFile(userID string, fileType int, url string, srvSendMsg bool) (*FileUploadResponse, error) {
+	// 请求参数
+	// 构建请求 URL
+	reqURL := fmt.Sprintf("https://api.sgroup.qq.com/v2/users/%s/files", userID)
+	method := "POST"
+
+	payload := strings.NewReader(`{
+  "file_type": ` + strconv.Itoa(fileType) + `,
+  "url": "` + url + `",
+  "srv_send_msg": ` + strconv.FormatBool(srvSendMsg) + `
+}`)
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, reqURL, payload)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	authToken, _ := tokenSource.Token()
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("appid", "102457514")
+	req.Header.Add("Authorization", "QQBot "+authToken.AccessToken)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	//fmt.Println(string(body))
+	// 解析响应
+	var response FileUploadResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+	// 检查响应状态
+	if response.FileInfo == "" {
+		return nil, fmt.Errorf("request failed with body: %s", body)
+	}
+	return &response, nil
+}
+
+// UploadGroupFile 上传文件到群聊的函数
+func UploadGroupFile(groupOpenID string, fileType int, url string, srvSendMsg bool) (*FileUploadResponse, error) {
 	// 请求参数
 	// 构建请求 URL
 	reqURL := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/files", groupOpenID)
