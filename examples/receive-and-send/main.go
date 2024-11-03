@@ -56,7 +56,7 @@ const (
 // 消息处理器，持有 openapi 对象
 var processor Processor
 var tokenSource oauth2.TokenSource
-var limiter = NewRequestLimiter(1 * time.Second)
+var limiter = NewRequestLimiter(2 * time.Second)
 
 func main() {
 	ctx := context.Background()
@@ -213,8 +213,10 @@ func (rl *RequestLimiter) LimitRequest(input string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 	log.Println("走到这来了: " + input)
+	log.Println("接收到请求: " + input + "，时间: " + time.Now().String())
 	now := time.Now()
 	if lastRequestTime, exists := rl.requests[input]; exists {
+		log.Println("上一次请求时间: ", lastRequestTime.String())
 		if now.Sub(lastRequestTime) < rl.limit {
 			// 请求在限制时间内，丢弃
 			return false
