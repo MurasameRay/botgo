@@ -83,8 +83,7 @@ func main() {
 	// 初始化 openapi，正式环境
 	api := botgo.NewOpenAPI(credentials.AppID, tokenSource).WithTimeout(5 * time.Second).SetDebug(true)
 	processor = Processor{
-		api:   api,
-		limit: NewRequestLimiter(1 * time.Second),
+		api: api,
 	}
 	// 注册处理函数
 	_ = event.RegisterHandlers(
