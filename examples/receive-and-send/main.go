@@ -56,7 +56,7 @@ const (
 // 消息处理器，持有 openapi 对象
 var processor Processor
 var tokenSource oauth2.TokenSource
-var limiter = NewRequestLimiter(2 * time.Second)
+var limiter = NewRequestLimiter(10 * time.Second)
 
 func main() {
 	ctx := context.Background()
@@ -126,7 +126,7 @@ func InteractionHandler() event.InteractionEventHandler {
 // GroupATMessageEventHandler 实现处理 at 消息的回调
 func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSGroupATMessageData) error {
-		if !limiter.LimitRequest(data.Content) {
+		if !limiter.LimitRequest(data.ID) {
 			log.Println("该信息被丢弃" + data.Content)
 			return nil
 		}
@@ -138,7 +138,7 @@ func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 // C2CMessageEventHandler 实现处理 c2c 消息的回调
 func C2CMessageEventHandler() event.C2CMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSC2CMessageData) error {
-		if !limiter.LimitRequest(data.Content) {
+		if !limiter.LimitRequest(data.ID) {
 			log.Println("该信息被丢弃" + data.Content)
 			return nil
 		}
