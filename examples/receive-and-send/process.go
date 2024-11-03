@@ -182,7 +182,7 @@ func generateGroupMessage(input string, data dto.Message) *dto.MessageToCreate {
 			response.Content = err.Error()
 			return response
 		}
-		response.Content = " "
+		response.Content = "每日随机刷新"
 		response.MsgType = dto.RichMediaMsg
 		response.Media.FileInfo = file.FileInfo
 	}
