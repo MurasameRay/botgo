@@ -56,7 +56,7 @@ const (
 // 消息处理器，持有 openapi 对象
 var processor Processor
 var tokenSource oauth2.TokenSource
-var limiter = NewRequestLimiter(10 * time.Second)
+var limiter = NewRequestLimiter(100 * time.Second)
 
 func main() {
 	ctx := context.Background()
