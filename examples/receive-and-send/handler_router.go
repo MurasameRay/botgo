@@ -20,11 +20,13 @@ var CommandRegistry = map[string]func(string) string{
 
 func imageHandler(input string) string {
 	folderPath := "/www/wwwroot/wordpress/images" // 替换为您的文件夹路径
+	urlPrefix := "http://blog.xiaocongyu.com/images"
 	if strings.Contains(input, "ba") || strings.Contains(input, "blue archive") ||
 		strings.Contains(input, "blue") || strings.Contains(input, "档案") {
 		folderPath += "/blue_archive"
+		urlPrefix += "/blue_archive"
 	}
-	urlPrefix := "http://blog.xiaocongyu.com/images"
+
 	imageList, _ := GetImageURLs(folderPath, urlPrefix)
 	index := rand.Int() % len(imageList)
 	//bytes, err := DownloadImage(imageList[index])
