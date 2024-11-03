@@ -17,8 +17,7 @@ import (
 
 // Processor is a struct to process message
 type Processor struct {
-	api   openapi.OpenAPI
-	limit *RequestLimiter
+	api openapi.OpenAPI
 }
 
 // ProcessChannelMessage is a function to process message
