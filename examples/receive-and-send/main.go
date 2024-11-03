@@ -212,7 +212,7 @@ func NewRequestLimiter(limit time.Duration) *RequestLimiter {
 func (rl *RequestLimiter) LimitRequest(input string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
-
+	log.Println("走到这来了: " + input)
 	now := time.Now()
 	if lastRequestTime, exists := rl.requests[input]; exists {
 		if now.Sub(lastRequestTime) < rl.limit {
