@@ -65,6 +65,7 @@ func ProcessCommand(command string) string {
 	for prefix, handler := range CommandRegistry {
 		if strings.HasPrefix(command, prefix) {
 			// 去掉前缀并提取消息
+			fmt.Println("Original command:", command)
 			message := strings.TrimSpace(strings.TrimPrefix(command, prefix))
 			return handler(message)
 		}
