@@ -83,22 +83,23 @@ func genErrMessage(data dto.Message, err error) *dto.MessageToCreate {
 // ProcessGroupMessage 回复群消息
 func (p Processor) ProcessGroupMessage(input string, data *dto.WSGroupATMessageData) error {
 	msg := generateDemoMessage(input, dto.Message(*data))
-	msgV2 := MessageRequest{
-		Content:  msg.Content,
-		MsgType:  int(msg.MsgType),
-		Markdown: msg.Markdown,
-		Keyboard: msg.Keyboard,
-		Media:    msg.Media,
-		Ark:      msg.Ark,
-		EventID:  msg.EventID,
-		MsgID:    msg.MsgID,
-		MsgSeq:   int(msg.MsgSeq),
-	}
-	tokenTmp, _ := tokenSource.Token()
-	if messageId, err := SendGroupMessageV2(data.GroupID, msgV2, tokenTmp.AccessToken); err != nil {
+	//msgV2 := MessageRequest{
+	//	Content:  msg.Content,
+	//	MsgType:  int(msg.MsgType),
+	//	Markdown: msg.Markdown,
+	//	Keyboard: msg.Keyboard,
+	//	Media:    msg.Media,
+	//	Ark:      msg.Ark,
+	//	EventID:  msg.EventID,
+	//	MsgID:    msg.MsgID,
+	//	MsgSeq:   int(msg.MsgSeq),
+	//}
+	//tokenTmp, _ := tokenSource.Token()
+	// messageId,
+	if err := p.sendGroupReply(context.Background(), data.GroupID, msg); err != nil {
 		_ = p.sendGroupReply(context.Background(), data.GroupID, genErrMessage(dto.Message(*data), err))
 	} else {
-		fmt.Println(messageId)
+		//fmt.Println(messageId)
 	}
 
 	return nil
@@ -111,22 +112,22 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 		userID = data.Author.ID
 	}
 	msg := generateDemoMessage(input, dto.Message(*data))
-	msgV2 := MessageRequest{
-		Content:  msg.Content,
-		MsgType:  int(msg.MsgType),
-		Markdown: msg.Markdown,
-		Keyboard: msg.Keyboard,
-		Media:    msg.Media,
-		Ark:      msg.Ark,
-		EventID:  msg.EventID,
-		MsgID:    msg.MsgID,
-		MsgSeq:   int(msg.MsgSeq),
-	}
-	tokenTmp, _ := tokenSource.Token()
-	if messageId, err := SendUserMessageV2(userID, msgV2, tokenTmp.AccessToken); err != nil {
+	//msgV2 := MessageRequest{
+	//	Content:  msg.Content,
+	//	MsgType:  int(msg.MsgType),
+	//	Markdown: msg.Markdown,
+	//	Keyboard: msg.Keyboard,
+	//	Media:    msg.Media,
+	//	Ark:      msg.Ark,
+	//	EventID:  msg.EventID,
+	//	MsgID:    msg.MsgID,
+	//	MsgSeq:   int(msg.MsgSeq),
+	//}
+	//tokenTmp, _ := tokenSource.Token() //messageId,
+	if err := p.sendC2CReply(context.Background(), userID, msg); err != nil {
 		_ = p.sendC2CReply(context.Background(), userID, genErrMessage(dto.Message(*data), err))
 	} else {
-		fmt.Println(messageId)
+		//fmt.Println(messageId)
 	}
 	return nil
 }
@@ -314,7 +315,7 @@ type MessageResponse struct {
 }
 
 // SendMessage 发送消息到指定群组
-func SendGroupMessageV2(groupOpenID string, msg MessageRequest, token string) (string, error) {
+func SendGroupActiveMessageV2(groupOpenID string, msg MessageRequest, token string) (string, error) {
 	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/groups/%s/messages", groupOpenID)
 	method := "POST"
 
@@ -356,7 +357,7 @@ func SendGroupMessageV2(groupOpenID string, msg MessageRequest, token string) (s
 }
 
 // SendMessage 发送消息到指定群组
-func SendUserMessageV2(openID string, msg MessageRequest, token string) (string, error) {
+func SendUserActiveMessageV2(openID string, msg MessageRequest, token string) (string, error) {
 	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/users/%s/messages", openID)
 	method := "POST"
 
