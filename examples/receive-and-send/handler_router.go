@@ -20,7 +20,7 @@ var CommandRegistry = map[string]func(string) string{
 
 func imageHandler(input string) string {
 	folderPath := "/www/wwwroot/wordpress/images" // 替换为您的文件夹路径
-	urlPrefix := "https://xiaocongyu.com/images"
+	urlPrefix := "http://blog.xiaocongyu.com/images"
 	imageList, _ := GetImageURLs(folderPath, urlPrefix)
 	index := rand.Int() % len(imageList)
 	//bytes, err := DownloadImage(imageList[index])
