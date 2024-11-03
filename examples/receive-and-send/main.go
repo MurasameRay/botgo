@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tencent-connect/botgo"
@@ -80,7 +81,10 @@ func main() {
 	}
 	// 初始化 openapi，正式环境
 	api := botgo.NewOpenAPI(credentials.AppID, tokenSource).WithTimeout(5 * time.Second).SetDebug(true)
-	processor = Processor{api: api}
+	processor = Processor{
+		api:   api,
+		limit: NewRequestLimiter(2 * time.Second),
+	}
 	// 注册处理函数
 	_ = event.RegisterHandlers(
 		// ***********消息事件***********
@@ -105,6 +109,7 @@ func main() {
 // ChannelATMessageEventHandler 实现处理 at 消息的回调
 func ChannelATMessageEventHandler() event.ATMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSATMessageData) error {
+
 		input := strings.ToLower(message.ETLInput(data.Content))
 		return processor.ProcessChannelMessage(input, data)
 	}
@@ -121,6 +126,9 @@ func InteractionHandler() event.InteractionEventHandler {
 // GroupATMessageEventHandler 实现处理 at 消息的回调
 func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSGroupATMessageData) error {
+		if processor.limit.LimitRequest(data.Content) {
+			return nil
+		}
 		input := strings.ToLower(message.ETLInput(data.Content))
 		return processor.ProcessGroupMessage(input, data)
 	}
@@ -129,6 +137,9 @@ func GroupATMessageEventHandler() event.GroupATMessageEventHandler {
 // C2CMessageEventHandler 实现处理 c2c 消息的回调
 func C2CMessageEventHandler() event.C2CMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSC2CMessageData) error {
+		if processor.limit.LimitRequest(data.Content) {
+			return nil
+		}
 		input := strings.ToLower(message.ETLInput(data.Content))
 		return processor.ProcessC2CMessage(input, data)
 		//string(event.RawMessage)
@@ -181,4 +192,34 @@ func GuildMessageHandler() event.MessageEventHandler {
 		fmt.Println(data)
 		return nil
 	}
+}
+
+type RequestLimiter struct {
+	mu       sync.Mutex
+	requests map[string]time.Time
+	limit    time.Duration
+}
+
+func NewRequestLimiter(limit time.Duration) *RequestLimiter {
+	return &RequestLimiter{
+		requests: make(map[string]time.Time),
+		limit:    limit,
+	}
+}
+
+func (rl *RequestLimiter) LimitRequest(input string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	if lastRequestTime, exists := rl.requests[input]; exists {
+		if now.Sub(lastRequestTime) < rl.limit {
+			// 请求在限制时间内，丢弃
+			return false
+		}
+	}
+
+	// 更新时间并记录请求
+	rl.requests[input] = now
+	return true
 }
