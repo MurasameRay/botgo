@@ -11,12 +11,24 @@ import (
 )
 
 // 定义命令注册表
-var CommandRegistry = map[string]func(string) string{
-	"/hello": helloHandler,
-	"/time":  timeHandler,
-	"/image": imageHandler,
-	"/gpt":   gptHandler,
-	"":       gptHandler,
+//var CommandRegistry = map[string]func(string) string{
+//	"/hello": helloHandler,
+//	"/time":  timeHandler,
+//	"/image": imageHandler,
+//	"/gpt":   gptHandler,
+//	"":       gptHandler,
+//}
+
+// 定义命令注册 不随机匹配，按照从上到下的顺序
+var CommandRegistry = []struct {
+	Prefix  string
+	Handler func(string) string
+}{
+	{"/hello", helloHandler},
+	{"/time", timeHandler},
+	{"/image", imageHandler},
+	{"/gpt", gptHandler},
+	{"", gptHandler},
 }
 
 func imageHandler(input string) string {
@@ -63,12 +75,12 @@ func DownloadImage(url string) ([]byte, error) {
 
 // 处理命令的函数
 func ProcessCommand(command string) string {
-	for prefix, handler := range CommandRegistry {
-		if strings.HasPrefix(command, prefix) {
+	for _, handler := range CommandRegistry {
+		if strings.HasPrefix(command, handler.Prefix) {
 			// 去掉前缀并提取消息
 			fmt.Println("Original command:", command)
-			message := strings.TrimSpace(strings.TrimPrefix(command, prefix))
-			return handler(message)
+			message := strings.TrimSpace(strings.TrimPrefix(command, handler.Prefix))
+			return handler.Handler(message)
 		}
 	}
 	return "Unknown command"
