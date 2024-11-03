@@ -19,8 +19,9 @@ var CommandRegistry = map[string]func(string) string{
 }
 
 func imageHandler(input string) string {
-
-	imageList, _ := GetUrlFromFile()
+	folderPath := "/www/wwwroot/wordpress/images" // 替换为您的文件夹路径
+	urlPrefix := "https://xiaocongyu.com"
+	imageList, _ := GetImageURLs(folderPath, urlPrefix)
 	index := rand.Int() % len(imageList)
 	//bytes, err := DownloadImage(imageList[index])
 	//if err != nil {

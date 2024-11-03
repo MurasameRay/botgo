@@ -168,15 +168,23 @@ func generateGroupMessage(input string, data dto.Message) *dto.MessageToCreate {
 	}
 	response.Media = &dto.MediaInfo{}
 	if strings.HasPrefix(msg, "http") {
-		file, err := UploadGroupFile(data.GroupID, 1, msg, false)
-
+		//file, err := UploadUserFile(data.GroupID, 1, msg, false)
+		fileData := dto.RichMediaMessage{
+			Content:    response.Content,
+			FileType:   1,
+			URL:        msg,
+			EventID:    response.EventID,
+			SrvSendMsg: false,
+			MsgSeq:     int64(response.MsgSeq),
+		}
+		file, err := processor.api.PostGroupMessage(context.Background(), data.GroupID, fileData)
 		if err != nil {
 			response.Content = err.Error()
 			return response
 		}
 		response.Content = " "
 		response.MsgType = dto.RichMediaMsg
-		response.Media.FileInfo = []byte(file.FileInfo)
+		response.Media.FileInfo = file.FileInfo
 	}
 	return response
 }

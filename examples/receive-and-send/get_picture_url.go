@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func GetUrlFromFile() ([]string, error) {
@@ -34,4 +36,36 @@ func GetUrlFromFile() ([]string, error) {
 		fmt.Println(line)
 	}
 	return lines, nil
+}
+
+func GetImageURLs(folderPath string, urlPrefix string) ([]string, error) {
+	var imageURLs []string
+
+	err := filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 检查是否是文件且后缀为 .jpg 或 .png
+		if !info.IsDir() {
+			if strings.HasSuffix(strings.ToLower(info.Name()), ".jpg") || strings.HasSuffix(strings.ToLower(info.Name()), ".png") {
+				// 计算相对路径
+				relPath, err := filepath.Rel(folderPath, path)
+				if err != nil {
+					return err
+				}
+
+				// 拼接 URL
+				imageURL := fmt.Sprintf("%s/%s", urlPrefix, relPath)
+				imageURLs = append(imageURLs, imageURL)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return imageURLs, nil
 }
