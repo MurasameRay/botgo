@@ -110,6 +110,7 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 	userID := ""
 	if data.Author != nil && data.Author.ID != "" {
 		userID = data.Author.ID
+		data.GroupID = userID
 	}
 	msg := generateUserMessage(input, dto.Message(*data))
 	//msgV2 := MessageRequest{
