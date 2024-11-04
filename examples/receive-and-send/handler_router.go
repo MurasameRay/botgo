@@ -27,8 +27,9 @@ var CommandRegistry = []struct {
 	{"/hello", helloHandler},
 	{"/time", timeHandler},
 	{"/image", imageHandler},
-	{"/gpt", gptHandler},
-	{"", gptHandler},
+	//{"/gpt", gptHandler},
+	//{"", gptHandler},
+	{"", helloHandler},
 }
 
 func imageHandler(input string) string {
@@ -88,7 +89,7 @@ func ProcessCommand(command string) string {
 
 // 定义处理函数
 func helloHandler(message string) string {
-	return fmt.Sprintf("hello, %s", message)
+	return fmt.Sprintf("%s", message)
 }
 
 func timeHandler(message string) string {
