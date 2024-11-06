@@ -83,19 +83,6 @@ func genErrMessage(data dto.Message, err error) *dto.MessageToCreate {
 // ProcessGroupMessage 回复群消息
 func (p Processor) ProcessGroupMessage(input string, data *dto.WSGroupATMessageData) error {
 	msg := generateGroupMessage(input, dto.Message(*data))
-	//msgV2 := MessageRequest{
-	//	Content:  msg.Content,
-	//	MsgType:  int(msg.MsgType),
-	//	Markdown: msg.Markdown,
-	//	Keyboard: msg.Keyboard,
-	//	Media:    msg.Media,
-	//	Ark:      msg.Ark,
-	//	EventID:  msg.EventID,
-	//	MsgID:    msg.MsgID,
-	//	MsgSeq:   int(msg.MsgSeq),
-	//}
-	//tokenTmp, _ := tokenSource.Token()
-	// messageId,
 	if err := p.sendGroupReply(context.Background(), data.GroupID, msg); err != nil {
 		_ = p.sendGroupReply(context.Background(), data.GroupID, genErrMessage(dto.Message(*data), err))
 	} else {
@@ -113,28 +100,6 @@ func (p Processor) ProcessC2CMessage(input string, data *dto.WSC2CMessageData) e
 		data.GroupID = userID
 	}
 	msg := generateUserMessage(input, dto.Message(*data))
-	//msgV2 := MessageRequest{
-	//	Content:  msg.Content,
-	//	MsgType:  int(msg.MsgType),
-	//	Markdown: msg.Markdown,
-	//	Keyboard: msg.Keyboard,
-	//	Media:    msg.Media,
-	//	Ark:      msg.Ark,
-	//	EventID:  msg.EventID,
-	//	MsgID:    msg.MsgID,
-	//	MsgSeq:   int(msg.MsgSeq),
-	//}
-	//tokenTmp, _ := tokenSource.Token() //messageId,
-	//msgV3 := dto.RichMediaMessage{
-	//	Content:  msg.Content,
-	//	FileType: 1,
-	//	Media:    msg.Media,
-	//	Ark:      msg.Ark,
-	//	EventID:  msg.EventID,
-	//	MsgID:    msg.MsgID,
-	//	MsgSeq:   int(msg.MsgSeq),
-	//}
-
 	if err := p.sendC2CReply(context.Background(), userID, msg); err != nil {
 		_ = p.sendC2CReply(context.Background(), userID, genErrMessage(dto.Message(*data), err))
 	} else {
@@ -213,8 +178,9 @@ func generateUserMessage(input string, data dto.Message) *dto.MessageToCreate {
 		MsgID: data.ID,
 	}
 	response.Media = &dto.MediaInfo{}
-	if strings.HasPrefix(msg, "http") {
-		//file, err := UploadUserFile(data.GroupID, 1, msg, false)
+	// 图片类型
+	if strings.HasPrefix(msg, "http") && (strings.HasSuffix(msg, ".jpg") || strings.HasSuffix(msg, ".png")) {
+		//file, err := UploadUserFile(data.GroupID, 1, msg, false) // v2接口，不明原因，暂不兼容V2消息回复
 		fileData := dto.RichMediaMessage{
 			Content:    response.Content,
 			FileType:   1,
