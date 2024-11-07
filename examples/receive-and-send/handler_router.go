@@ -29,7 +29,7 @@ var CommandRegistry = []struct {
 	{"/image", imageHandler},
 	//{"/gpt", gptHandler},
 	//{"", gptHandler},
-	{"", helloHandler},
+	//{"", helloHandler},
 }
 
 func imageHandler(input string) string {
