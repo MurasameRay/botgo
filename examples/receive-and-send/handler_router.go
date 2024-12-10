@@ -35,11 +35,11 @@ var CommandRegistry = []struct {
 func imageHandler(input string) string {
 	folderPath := "/www/wwwroot/blog.xiaocongyu.com/wp-content/uploads" // 替换为您的文件夹路径
 	urlPrefix := "http://blog.xiaocongyu.com/wp-content/uploads"
-	//if strings.Contains(input, "ba") || strings.Contains(input, "blue archive") ||
-	//	strings.Contains(input, "blue") || strings.Contains(input, "档案") {
-	folderPath += "/blue_archive"
-	urlPrefix += "/blue_archive"
-	//}
+	if strings.Contains(input, "ba") || strings.Contains(input, "blue archive") ||
+		strings.Contains(input, "blue") || strings.Contains(input, "档案") {
+		folderPath += "/blue_archive"
+		urlPrefix += "/blue_archive"
+	}
 
 	imageList, _ := GetImageURLs(folderPath, urlPrefix)
 	index := rand.Int() % len(imageList)
