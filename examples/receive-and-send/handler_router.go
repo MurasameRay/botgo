@@ -89,7 +89,10 @@ func ProcessCommand(command string) string {
 
 // 定义处理函数
 func helloHandler(message string) string {
-	return fmt.Sprintf("%s", message)
+	if message == "" {
+		return "老师你好，我是阿罗娜～有什么可以帮你的吗"
+	}
+	return message
 }
 
 func timeHandler(message string) string {
