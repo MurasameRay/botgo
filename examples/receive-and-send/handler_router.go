@@ -93,7 +93,14 @@ func helloHandler(message string) string {
 }
 
 func timeHandler(message string) string {
-	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	// 加载北京时区
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return fmt.Sprintf("Error loading location: %v", err)
+	}
+
+	// 获取当前时间并设置为北京时区
+	currentTime := time.Now().In(loc).Format("2006-01-02 15:04:05")
 	return fmt.Sprintf("The current time is: %s", currentTime)
 }
 
