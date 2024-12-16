@@ -136,7 +136,7 @@ func generateGroupMessage(input string, data dto.Message) *dto.MessageToCreate {
 		//file, err := UploadUserFile(data.GroupID, 1, msg, false)
 		fileData := dto.RichMediaMessage{
 			Content:    response.Content,
-			FileType:   uint64(dto.RichMedia),
+			FileType:   uint64(dto.Text),
 			URL:        msg,
 			EventID:    response.EventID,
 			SrvSendMsg: false,
@@ -183,7 +183,7 @@ func generateUserMessage(input string, data dto.Message) *dto.MessageToCreate {
 		//file, err := UploadUserFile(data.GroupID, 1, msg, false) // v2接口，不明原因，暂不兼容V2消息回复
 		fileData := dto.RichMediaMessage{
 			Content:    response.Content,
-			FileType:   uint64(dto.RichMedia),
+			FileType:   uint64(dto.Text),
 			URL:        msg,
 			EventID:    response.EventID,
 			SrvSendMsg: false,
