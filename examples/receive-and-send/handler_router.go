@@ -36,7 +36,7 @@ func imageHandler(input string) string {
 	//folderPath := "/www/wwwroot/blog.xiaocongyu.com/wp-content/uploads" // 替换为您的文件夹路径
 	folderPath := "/root/images" // 替换为您的文件夹路径
 	//urlPrefix := "http://blog.xiaocongyu.com/wp-content/uploads"
-	urlPrefix := "http://blog.xiaocongyu.com"
+	urlPrefix := "http://file.xiaocongyu.com"
 	if strings.Contains(input, "ba") || strings.Contains(input, "blue archive") ||
 		strings.Contains(input, "blue") || strings.Contains(input, "档案") {
 		folderPath += "/blue_archive"
