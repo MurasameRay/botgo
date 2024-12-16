@@ -8,6 +8,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/oauth2 v0.23.0
 	gopkg.in/yaml.v2 v2.4.0
+	github.com/tencent-connect/botgo v0.1.7
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -19,7 +20,6 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 )
-
-replace github.com/tencent-connect/botgo => ../

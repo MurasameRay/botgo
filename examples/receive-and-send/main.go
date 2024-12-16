@@ -73,10 +73,7 @@ func main() {
 		log.Fatalln("parse config failed, err:", err)
 	}
 	log.Println("credentials:", credentials)
-	tokenSource = token.NewQQBotTokenSource(&token.QQBotCredentials{
-		AppID:     credentials.AppID,
-		AppSecret: credentials.AppSecret,
-	})
+	tokenSource := token.NewQQBotTokenSource(credentials)
 	if err = token.StartRefreshAccessToken(ctx, tokenSource); err != nil {
 		log.Fatalln(err)
 	}
@@ -109,7 +106,6 @@ func main() {
 // ChannelATMessageEventHandler 实现处理 at 消息的回调
 func ChannelATMessageEventHandler() event.ATMessageEventHandler {
 	return func(event *dto.WSPayload, data *dto.WSATMessageData) error {
-
 		input := strings.ToLower(message.ETLInput(data.Content))
 		return processor.ProcessChannelMessage(input, data)
 	}
