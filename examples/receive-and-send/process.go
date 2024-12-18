@@ -135,7 +135,7 @@ func generateGroupMessage(input string, data dto.Message) *dto.MessageToCreate {
 	if strings.HasPrefix(msg, "http") {
 		//file, err := UploadUserFile(data.GroupID, 1, msg, false)
 		fileData := dto.RichMediaMessage{
-			Content:    response.Content,
+			Content:    msg,
 			FileType:   uint64(dto.Text),
 			URL:        msg,
 			EventID:    response.EventID,

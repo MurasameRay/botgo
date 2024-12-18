@@ -28,7 +28,7 @@ var CommandRegistry = []struct {
 	{"/time", timeHandler},
 	{"/image", imageHandler},
 	//{"/gpt", gptHandler},
-	//{"", gptHandler},
+	{"", gptHandler},
 	//{"", helloHandler},
 }
 
