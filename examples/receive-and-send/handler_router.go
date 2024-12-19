@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -110,16 +112,26 @@ func timeHandler(message string) string {
 }
 
 func gptHandler(message string) string {
-	url := "http://127.0.0.1:23333/ask_chatgpt?word=" + message
-	method := "GET"
+	url := "http://127.0.0.1:23333/ask_chatgpt"
+	method := "POST"
 
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
 
+	// 创建 JSON 数据
+	jsonData := map[string]string{"word": message}
+	jsonValue, err := json.Marshal(jsonData)
 	if err != nil {
 		fmt.Println(err)
 		return err.Error()
 	}
+
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonValue))
+	if err != nil {
+		fmt.Println(err)
+		return err.Error()
+	}
+	req.Header.Set("Content-Type", "application/json")
+
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
